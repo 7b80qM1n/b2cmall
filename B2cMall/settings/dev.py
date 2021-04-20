@@ -32,10 +32,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'corsheaders',
 
     'users',
+    'oauth',
+
 
 ]
 
@@ -222,8 +225,8 @@ REST_FRAMEWORK = {
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = (
-    '127.0.0.1:8080',
-    'localhost:8080',
+    'https://127.0.0.1:8080',
+    'https://localhost:8080',
 )
 CORS_ALLOW_METHODS = (
     'DELETE',

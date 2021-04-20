@@ -1,5 +1,6 @@
+import random
+from celery_task.sms.tasks import send_sms_code
 from rest_framework.views import APIView
-from libs.tencent_sms import sms
 from django_redis import get_redis_connection
 from B2cMall.settings import const
 from utils.response import APIResponse
@@ -13,24 +14,24 @@ class SMSCodeView(APIView):
         # 创建redis连接对象
         conn = get_redis_connection('verify_codes')
         # 获取标记
-        send_flag = conn.get(const.SEND_FLAG)
+        send_flag = conn.get(f'{const.SEND_FLAG}{mobile}')
         if send_flag:
             return APIResponse(code=0, msg='短信发送频繁', status=status.HTTP_400_BAD_REQUEST)
-        # 生成验证码
-        code = sms.get_code()
-        # 发送短信
-        # result = sms.send_sms(mobile, code)
-        # 短信测试
-        result = True
 
+        # 生成验证码
+        code = str(random.randrange(1000, 9999))
         log.warning(code)
 
-        # 验证码保存
-        conn.setex(f'{const.PHONE_CACHE_KEY}{mobile}', 60, code)
-        # 保存标记,表示此手机号已发送过短信,有效期60s
-        conn.setex(f'{const.SEND_FLAG}', 60, code)
+        # 发送短信
+        send_sms_code.delay(mobile, code)
 
-        if result:
-            return APIResponse(code=1, msg='验证码发送成功')
-        else:
-            return APIResponse(code=0, msg='验证码发送失败,请稍候重试')
+        # 创建管道
+        pl = conn.pipeline()
+        # 验证码保存
+        pl.setex(f'{const.PHONE_CACHE_KEY}{mobile}', 60, code)
+        # 保存标记,表示此手机号已发送过短信,有效期60s
+        pl.setex(f'{const.SEND_FLAG}{mobile}', 60, code)
+        # 执行管道
+        pl.execute()
+
+        return APIResponse(code=1, msg='验证码发送成功')

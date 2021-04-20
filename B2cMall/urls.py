@@ -21,6 +21,8 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('verifications.urls')),
+    path('', include('verifications.urls')),  # 短信模块
+    path('users/', include('users.urls')),  # 用户模块
+    path('oauth/', include('oauth.urls')),  # qq模块
     re_path('media/(?P<path>.*)', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
