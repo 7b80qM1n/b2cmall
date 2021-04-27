@@ -18,11 +18,13 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('verifications.urls')),  # 短信模块
     path('users/', include('users.urls')),  # 用户模块
     path('oauth/', include('oauth.urls')),  # qq模块
+    path('areas/', include('areas.urls')),  # 省市区模块
+    path('goods/', include('goods.urls')),  # 省市区模块
     re_path('media/(?P<path>.*)', serve, {'document_root': settings.MEDIA_ROOT}),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
 ]

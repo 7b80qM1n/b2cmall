@@ -1,5 +1,3 @@
-# mysql配置
-SQL_PASSWD = 'Jqmkfc039988?'
 
 # redis配置
 REDIS_PASS = 'jqmkfc039988'
@@ -15,3 +13,16 @@ SEND_FLAG = 'send_flag'
 QQ_CLIENT_ID = None  # APPID
 QQ_CLIENT_SECRET = None  # APPKEY
 QQ_REDIRECT_URI = None  # 回调域名
+
+# 邮箱
+EMAIL_HOST = 'smtp.qq.com'  # 发送方的smtp服务器地址
+EMAIL_PORT = 587  # smtp服务端口
+EMAIL_HOST_USER = '624904571@qq.com'  # 发送方 邮箱地址
+EMAIL_HOST_PASSWORD = 'nrjsstcebjqdbege'  # 获得的  授权码
+EMAIL_USE_TLS = True  # 必须为True
+EMAIL_USE_SSL = False
+EMAIL_SSL_CERTFILE = None
+EMAIL_SSL_KEYFILE = None
+EMAIL_TIMEOUT = None
+DEFAULT_FROM_EMAIL = '624904571@qq.com'  # 和 EMAIL_HOST_USER  相同
+

@@ -35,10 +35,17 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
+    'django_filters',
+    'django_crontab',  # 定时任务
+
+    'ckeditor',  # 富文本编辑器
+    'ckeditor_uploader',  # 富文本编辑器上传图片模块
 
     'users',
     'oauth',
-
+    'areas',
+    'goods',
+    'contents',
 
 ]
 
@@ -58,8 +65,7 @@ ROOT_URLCONF = 'B2cMall.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'b2cmall',
         'USER': '7b80qM1n',
-        'PASSWORD': f'{SQL_PASSWD}',
+        'PASSWORD': 'Jqmkfc039988?',
         'PORT': 3306,
         'HOST': '127.0.0.1'
     }
@@ -219,6 +225,19 @@ SESSION_CACHE_ALIAS = "session"
 REST_FRAMEWORK = {
     # 异常处理
     'EXCEPTION_HANDLER': 'utils.exception.common_exception_handler',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',  # jwt认证类 放在第一位是默认项
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+# JWT过期时间
+import datetime
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'users.utils.jwt_response_payload_handler',
 }
 
 # 跨域
@@ -242,3 +261,41 @@ CORS_ALLOW_HEADERS = (
     'authorization',
     'content-type',
 )
+
+# DRF扩展
+REST_FRAMEWORK_EXTENSIONS = {
+    # 缓存时间
+    'DEFAULT_CACHE_RESPONSE_TIMEOUT': 60 * 60 * 24 * 7,
+    # 缓存存储
+    'DEFAULT_USE_CACHE': 'default',
+}
+
+# 富文本编辑器ckeditor配置
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',  # 工具条功能
+        'height': 300,  # 编辑器高度
+        # 'width': 300,  # 编辑器宽
+    },
+}
+CKEDITOR_UPLOAD_PATH = ''  # 上传图片保存路径，此处设为'', 会去django找文件存储路径
+
+# MiNIO配置
+# MINIO_SERVER = '192.168.111.128:9000/'
+# MINIO_ACCESSKEY = '7b80qM1n'
+# MINIO_SECRET = '624904571@qq.com'
+# MINIO_SECURE = False
+# MINIO_BUCKET = 'bucket-name'
+# DEFAULT_FILE_STORAGE = 'django_minio.storage.MinioStorage'
+
+# FastDFS配置
+FDFS_URL = 'http://192.168.111.128:8888/'
+FDFS_CLIENT_CONF = os.path.join(BASE_DIR, 'utils/FastDFS/client.conf')
+
+# django文件存储
+DEFAULT_FILE_STORAGE = 'utils.FastDFS.FastDFStest.FastDFSStorage'
+
+
+# 生成的静态html文件保存目录
+GENERATED_STATIC_HTML_FILES_DIR = os.path.join(os.path.dirname(BASE_DIR), 'webstem')
+

@@ -1,9 +1,15 @@
 from rest_framework.decorators import action
-from rest_framework.mixins import CreateModelMixin
+from rest_framework import status
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet, ViewSet
+from rest_framework.generics import RetrieveAPIView, UpdateAPIView
 from utils.response import APIResponse
 from . import models, serializers
+from .utils import check_email_verify_url
 
+
+# 注册视图 post/ users/register/
 class RegisterView(GenericViewSet, CreateModelMixin):
     queryset = models.User.objects.all()
     serializer_class = serializers.UserRegisterModelSerializer
@@ -15,6 +21,7 @@ class RegisterView(GenericViewSet, CreateModelMixin):
         return APIResponse(code=1, msg='注册成功', username=username, token=token)
 
 
+# 登录视图
 class LoginView(ViewSet):
 
     # 验证手机是否存在
@@ -42,3 +49,89 @@ class LoginView(ViewSet):
             return APIResponse(code=1, msg='登陆成功', token=token, username=username, user_id=user_id)
         else:
             return APIResponse(code=0, msg=ser.errors)
+
+
+# 用户中心详情视图 get/ users/info/
+class UserDetailView(RetrieveAPIView):
+    # queryset = models.User.objects.all()
+    serializer_class = serializers.UserCenterModelSerializer
+    permission_classes = [IsAuthenticated]
+
+    # 重写要返回的模型对象
+    def get_object(self):
+        return self.request.user
+
+
+# 用户中心修改and激活邮件视图 put/ users/email/
+class UserMailView(UpdateAPIView):
+    serializer_class = serializers.UserMailViewModelSerializer
+    permission_classes = [IsAuthenticated]
+
+    # 重写要返回的模型对象
+    def get_object(self):
+        return self.request.user
+
+
+# 激活邮箱回调 get/  users/email/
+class EmailVerifyView(ViewSet):
+
+    @action(methods=['GET'], detail=False)
+    def verifycation(self, request, *args, **kwargs):
+        # 获取前端查询字符串传入的token
+        token = request.query_params.get('token')
+        # 解密token并查询对应的user
+        user = check_email_verify_url(token)
+        if not user:
+            return APIResponse(code=0, msg='链接失效,请重新激活', status=status.HTTP_400_BAD_REQUEST)
+        # 修改当前user的email_action为True
+        user.email_action = True
+        user.save()
+
+        return APIResponse(code=1, msg='激活成功', username=user.username)
+
+
+class UserAddressView(UpdateModelMixin, GenericViewSet):
+    """收货地址的增删查改"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.UserAddressViewModelSerializer
+
+    def get_queryset(self):
+        return self.request.user.addresses.filter(is_show=True, is_delete=False)
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        count = user.addresses.filter(is_delete=False, is_show=True).count()
+        if count >= 20:
+            return APIResponse(code=0, msg='收货地址最多20个', status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return APIResponse(code=1, msg='成功', result=serializer.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        user = request.user
+        return APIResponse(user_id=user.id, default_address_id=user.default_address_id, limit=20, addresses=serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        address = self.get_object()
+        address.is_delete = True
+        address.save()
+        return APIResponse(code=1, msg='删除成功')
+
+    @action(methods=['PUT'], detail=True)
+    def title(self, request, pk=None):
+        address = self.get_object()
+        serializer = serializers.UpdateTitleSerializer(instance=address, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return APIResponse(code=1, msg='标题修改成功')
+
+    @action(methods=['PUT'], detail=True)
+    def status(self, request, pk=None):
+        address = self.get_object()
+        request.user.default_address = address
+        request.user.save()
+        return APIResponse(code=1, msg='默认地址设置成功')
+
