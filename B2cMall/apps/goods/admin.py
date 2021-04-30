@@ -40,7 +40,7 @@ class SKUImageAdmin(admin.ModelAdmin):
 
         sku = obj.sku
         if not sku.default_image_url:
-            sku.default_image_url = obj
+            sku.default_image_url = obj.image.url
         # 重新生成新的列表静态界面
         get_sku_detail_static.delay(sku.id)
 

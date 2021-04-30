@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 
-
+migrations/*initial.py
 .idea/
 logs/
 scripts/

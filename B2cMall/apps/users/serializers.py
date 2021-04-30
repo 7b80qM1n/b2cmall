@@ -5,6 +5,7 @@ from django_redis import get_redis_connection
 from B2cMall.settings import const
 from celery_task.email.tasks import send_verify_email
 from users.utils import generate_email_verify_url
+from goods.models import SKU
 
 class UserRegisterModelSerializer(serializers.ModelSerializer):
     code = serializers.CharField(label='验证码', max_length=4, min_length=4, write_only=True)
@@ -162,7 +163,42 @@ class UserAddressViewModelSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('手机号格式错误')
         return value
 
+
 class UpdateTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Address
         fields = ['title']
+
+
+class AddUserCookiesSerializer(serializers.Serializer):
+    sku_id = serializers.IntegerField(label='商品sku_id', min_value=1)
+
+    def validate_sku_id(self, value):
+        """校验sku是否存在"""
+        try:
+            SKU.objects.get(id=value)
+        except SKU.DoesNotExist:
+            raise serializers.ValidationError('sku_id不存在')
+        else:
+            return value
+
+    def create(self, validated_data):
+        sku_id = validated_data.get('sku_id')
+        user = self.context.get('request').user
+
+        conn = get_redis_connection('history_codes')
+        pl = conn.pipeline()
+        # 去重(移除已经存在的本商品浏览记录)
+        pl.lrem(f'history_{user.id}', 0, sku_id)
+        # 添加新的浏览记录
+        pl.lpush(f'history_{user.id}', sku_id)
+        # 设置记录保存数量
+        pl.ltrim(f'history_{user.id}', 0, 4)
+        pl.execute()
+
+        return validated_data
+
+class SKUSerialize(serializers.ModelSerializer):
+    class Meta:
+        model = SKU
+        fields = '__all__'

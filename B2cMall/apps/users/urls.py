@@ -7,6 +7,7 @@ router.register('register', views.RegisterView, 'register')
 router.register('', views.LoginView, 'login')
 router.register('', views.EmailVerifyView, '')
 router.register('address', views.UserAddressView, '')
+router.register('browse_histories', views.AddUserCookiesView, '')
 
 urlpatterns = [
     path('', include(router.urls)),

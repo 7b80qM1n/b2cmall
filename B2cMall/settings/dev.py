@@ -216,6 +216,18 @@ CACHES = {
             "PASSWORD": f"{REDIS_PASS}"
         }
     },
+    "history_codes": {  # 存储商品浏览记录
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{SET_PATH}:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 1000,
+                "encoding": 'utf-8'
+            },
+            "PASSWORD": f"{REDIS_PASS}"
+        }
+    },
 
 }
 

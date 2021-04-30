@@ -1,13 +1,14 @@
+from django_redis import get_redis_connection
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import GenericViewSet, ViewSet
-from rest_framework.generics import RetrieveAPIView, UpdateAPIView
+from rest_framework.viewsets import GenericViewSet, ViewSet, ViewSetMixin
+from rest_framework.generics import RetrieveAPIView, UpdateAPIView, CreateAPIView
 from utils.response import APIResponse
 from . import models, serializers
 from .utils import check_email_verify_url
-
+from goods.models import SKU
 
 # 注册视图 post/ users/register/
 class RegisterView(GenericViewSet, CreateModelMixin):
@@ -89,7 +90,7 @@ class EmailVerifyView(ViewSet):
 
         return APIResponse(code=1, msg='激活成功', username=user.username)
 
-
+# 收货地址的增删查改  users/address
 class UserAddressView(UpdateModelMixin, GenericViewSet):
     """收货地址的增删查改"""
     permission_classes = [IsAuthenticated]
@@ -134,4 +135,32 @@ class UserAddressView(UpdateModelMixin, GenericViewSet):
         request.user.default_address = address
         request.user.save()
         return APIResponse(code=1, msg='默认地址设置成功')
+
+# 用户商品浏览记录保存  post/get  users/browse_histories
+class AddUserCookiesView(ViewSetMixin, CreateAPIView):
+
+    serializer_class = serializers.AddUserCookiesSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return APIResponse(result=serializer.data, status=status.HTTP_201_CREATED)
+
+    # 获取浏览记录
+    def get(self, request):
+        user = request.user
+        conn = get_redis_connection('history_codes')
+        history_list = conn.lrange(f'history_{user.id}', 0, -1)
+
+        sku_obj_list = []
+        for sku_id in history_list:
+            sku_obj = SKU.objects.get(id=sku_id)
+            sku_obj_list.append(sku_obj)
+
+        serializer = serializers.SKUSerialize(sku_obj_list, many=True)
+
+        return APIResponse(result=serializer.data)
+
 
