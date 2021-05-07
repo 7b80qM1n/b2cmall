@@ -24,7 +24,8 @@ urlpatterns = [
     path('users/', include('users.urls')),  # 用户模块
     path('oauth/', include('oauth.urls')),  # qq模块
     path('areas/', include('areas.urls')),  # 省市区模块
-    path('goods/', include('goods.urls')),  # 省市区模块
+    path('goods/', include('goods.urls')),  # 商品模块
+    path('carts/', include('carts.urls')),  # 购物车模块
     re_path('media/(?P<path>.*)', serve, {'document_root': settings.MEDIA_ROOT}),
     path('ckeditor/', include('ckeditor_uploader.urls')),
 ]

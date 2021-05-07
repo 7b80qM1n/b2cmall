@@ -228,7 +228,18 @@ CACHES = {
             "PASSWORD": f"{REDIS_PASS}"
         }
     },
-
+    "cart": {  # 登录用户购物车数据
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{SET_PATH}:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 1000,
+                "encoding": 'utf-8'
+            },
+            "PASSWORD": f"{REDIS_PASS}"
+        }
+    },
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -307,7 +318,5 @@ FDFS_CLIENT_CONF = os.path.join(BASE_DIR, 'utils/FastDFS/client.conf')
 # django文件存储
 DEFAULT_FILE_STORAGE = 'utils.FastDFS.FastDFStest.FastDFSStorage'
 
-
 # 生成的静态html文件保存目录
 GENERATED_STATIC_HTML_FILES_DIR = os.path.join(os.path.dirname(BASE_DIR), 'webstem')
-
